@@ -1,5 +1,25 @@
 ## Functions
 
+get_uci = function(){
+  uci = read.csv(url("https://archive.ics.uci.edu/ml/machine-learning-databases/statlog/australian/australian.dat"),
+                 sep = " ", header = FALSE)
+  uci$V1 = as.factor(uci$V1)
+  uci$V4 = as.factor(uci$V4)
+  uci$V5 = as.factor(uci$V5)
+  uci$V6 = as.factor(uci$V6)
+  uci$V8 = as.factor(uci$V8)
+  uci$V9 = as.factor(uci$V9)
+  uci$V11 = as.factor(uci$V11)
+  uci$V12 = as.factor(uci$V12)
+  uci$V15 = as.factor(uci$V15)
+  str(uci)
+  data = cbind(X = rep(1:nrow(uci)),
+               Target = uci[, "V15"],
+               uci[, -15])
+  return(data)
+}
+
+
 # Binning the data
 library(dplyr)
 library(tidyr)
@@ -23,7 +43,7 @@ bin_func = function(data, nbins, eqdist){
   }
   bin.collapse = data.bin %>%
     group_by(bin) %>%
-    summarise(
+    dplyr::summarise(
       count = n(),
       scores_mean = mean(scores),
       label_mean = mean(label),
@@ -121,7 +141,7 @@ isotonic_fit_func = function(scores_uncal_label){
               iso_func = iso_func))
 }
 
-uncert_plot = function(data, scores){
+uncert_plot = function(data, scores, fit_col){
   ggplot()+
     geom_ribbon(aes(x=data$regions$x, ymin=data$regions$lower, 
                     ymax=data$regions$upper, 
@@ -129,7 +149,7 @@ uncert_plot = function(data, scores){
     geom_point(aes(x=sort(scores), y=data$cases$CEP_pav, color='Iso Fit'), size = 2)+
     geom_line(aes(x=sort(scores), y=data$cases$CEP_pav, color='Iso Fit'), size = 1)+
     geom_abline(intercept = 0, slope = 1, linetype="dashed")+
-    scale_color_manual('Legend', values=c('steelblue'))+
+    scale_color_manual('Legend', values=c(fit_col))+
     scale_fill_manual('Legend', values=c('#a10028'))+
     theme(legend.position = "none", text = element_text(size = 16))+
     xlab("Predicted Score")+
@@ -145,7 +165,7 @@ calc_auc = function(scores, label){
   return(list(roc = perf, auc = auc))
 }
 
-score_test_func = function(classifier_model, classifier, calibrator_sigmoid, iso_func_in){
+score_test_func = function(classifier_model, classifier, calibrator_sigmoid, iso_func_in, test_df){
   if (classifier_model == "RF"){
     scores_uncalib_test = predict(classifier, newdata = test_df, type = "prob")[,2]
   } else if (classifier_model == "GBM"){
@@ -166,6 +186,19 @@ score_test_func = function(classifier_model, classifier, calibrator_sigmoid, iso
                                     probs_iso = recalib_iso_test))
   calibs_test = calibs_test[order(calibs_test$scores_uncal),]
   return(calibs_test)
+}
+
+test_assess_func = function(data){
+  r_raw = summary(reliabilitydiag(x = data$scores_uncal, y = data$label,
+                                  region.method = "resampling", region.position = "diagonal"))
+  r_sig = summary(reliabilitydiag(x = data$probs_sig, y = data$label,
+                                  region.method = "resampling", region.position = "diagonal"))
+  r_iso = summary(reliabilitydiag(x = data$probs_iso, y = data$label,
+                                  region.method = "resampling", region.position = "diagonal"))
+  result = as.data.frame(rbind(uncal = r_raw[,-1],
+                               sigmoid = r_sig[,-1],
+                               isotonic = r_iso[,-1]))
+  return(result)
 }
 
 train_cv_func = function(classifier_model, train_cv){
@@ -241,7 +274,7 @@ train_cv_func = function(classifier_model, train_cv){
 
 
 test_cv_func = function(classifier_model, Classifier_list,
-                        Sigmoid_list, Isotonic_list){
+                        Sigmoid_list, Isotonic_list, test_df){
   # Obtain average un-calibrated scores
   uncal_scores = lapply(Classifier_list, function(x){
     #predict(x, newdata = test_df, type = "prob")[,2]
