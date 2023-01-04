@@ -845,7 +845,7 @@ system.time({
     ## Best of gen:  0.004098251 Params:  1 315 11
 
     ##    user  system elapsed 
-    ##  21.496   2.027  14.496
+    ##  20.797   2.016  14.025
 
 Optimizing on maximum Discrimination
 
@@ -870,7 +870,7 @@ gen_res_rf = GeneticAlg.int(genomeLen = 3, genomeMin = c(1, 50, 1), genomeMax = 
     ## Best of gen:  -0.1640125 Params:  4 402 14
 
     ##    user  system elapsed 
-    ##  22.794   2.052  15.454
+    ##  22.489   2.081  15.316
 
 <!-- #### Sigmoid Scaling -->
 <!-- ```{r} -->
