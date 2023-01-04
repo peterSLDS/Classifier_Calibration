@@ -101,10 +101,10 @@ below.
 #### Binning and Counting
 
 ``` r
-rf_bc = bin_func(data = rf_scored, nbins = 10, eqdist = TRUE)
-gbm_bc = bin_func(data = gbm_scored, nbins = 10, eqdist = TRUE)
-nb_bc = bin_func(data = nb_scored, nbins = 10, eqdist = TRUE)
-lr_bc = bin_func(data = lr_scored, nbins = 10, eqdist = TRUE)
+rf_bc = bin_func(data = rf_scored, nbins = 10, eqdist = FALSE)
+gbm_bc = bin_func(data = gbm_scored, nbins = 10, eqdist = FALSE)
+nb_bc = bin_func(data = nb_scored, nbins = 10, eqdist = FALSE)
+lr_bc = bin_func(data = lr_scored, nbins = 10, eqdist = FALSE)
 ```
 
 ``` r
@@ -139,16 +139,41 @@ bc_err = ggplot()+
 ```
 
 ``` r
+rf_bc_alt = bin_func(data = rf_scored, nbins = 10, eqdist = TRUE)
+```
+
+    ## `summarise()` ungrouping output (override with `.groups` argument)
+
+``` r
+bc_bin = ggplot()+
+  geom_point(aes(x = rf_bc$scores_mean, y = rf_bc$label_mean, color = "Evenly Populated"))+
+  geom_line(aes(x = rf_bc$scores_mean, y = rf_bc$label_mean, color = "Evenly Populated"))+
+  geom_point(aes(x = rf_bc_alt$scores_mean, y = rf_bc_alt$label_mean, color = "Evenly Spaced"))+
+  geom_line(aes(x = rf_bc_alt$scores_mean, y = rf_bc_alt$label_mean, color = "Evenly Spaced"))+
+  geom_abline(intercept = 0, slope = 1, linetype="dashed")+
+  xlab("Mean Predicted Score")+
+  ylab("Event Frequency")+
+  theme(legend.position = "bottom", text = element_text(size = 12))+
+  scale_color_manual('Bin Type', values=c("#6495ED", "#D40060"))
+```
+
+``` r
 bc_plot
 ```
 
-![](Appendix_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
+![](Appendix_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
 
 ``` r
 bc_err
 ```
 
-![](Appendix_files/figure-gfm/unnamed-chunk-9-2.png)<!-- -->
+![](Appendix_files/figure-gfm/unnamed-chunk-10-2.png)<!-- -->
+
+``` r
+bc_bin
+```
+
+![](Appendix_files/figure-gfm/unnamed-chunk-10-3.png)<!-- -->
 
 #### Sigmoid Scaling
 
@@ -175,7 +200,7 @@ sig_plot = ggplot()+
 sig_plot
 ```
 
-![](Appendix_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
+![](Appendix_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
 
 #### Isotonic Scaling
 
@@ -202,7 +227,7 @@ iso_plot = ggplot()+
 iso_plot
 ```
 
-![](Appendix_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+![](Appendix_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
 
 ### Calibration Analysis
 
@@ -276,7 +301,7 @@ ggplot()+
              x = 0.75, y = 0.25, color = "yellow", fill = "black", size = 4)
 ```
 
-![](Appendix_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
+![](Appendix_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
 
 #### Uncertainty Assessment
 
@@ -319,7 +344,7 @@ ggarrange(reldiag_func(data = rf_scored, position = "diagonal", method = "resamp
           nrow = 2, ncol = 2, common.legend = TRUE)
 ```
 
-![](Appendix_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
+![](Appendix_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
 
 ## Re-Calibration
 
@@ -407,7 +432,7 @@ ggplot()+
   scale_color_manual('Classifier', values=c('#9932CC', "#DC143C", "#6495ED"))
 ```
 
-![](Appendix_files/figure-gfm/unnamed-chunk-16-1.png)<!-- --> Having a
+![](Appendix_files/figure-gfm/unnamed-chunk-17-1.png)<!-- --> Having a
 closer look into the calibration of test scores from a Random Forest
 classification model together with an isotonic calibration model are
 analysed using binning and counting. Since there are only ten unique
@@ -425,14 +450,14 @@ rf_test %>%
   ggplot()+
   geom_point(aes(x = prob_disc, y = label_mean), col="#6495ED")+
   geom_line(aes(x = prob_disc, y = label_mean), col="#6495ED")+
-  geom_label(aes(x = prob_disc, y = label_mean, label = count), nudge_y = -0.05)+
+  geom_label(aes(x = prob_disc, y = label_mean, label = count), nudge_y = -0.02, nudge_x = 0.02)+
   geom_abline(intercept = 0, slope = 1, linetype="dashed")+
   xlab("Mean Predicted Score")+
   ylab("Event Frequency")+
   theme(legend.position = "bottom", text = element_text(size = 12))
 ```
 
-![](Appendix_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
+![](Appendix_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
 
 ### Cross-Validation
 
@@ -458,7 +483,7 @@ id = id[1:nrow(train_df_cv)]
 hist(id)
 ```
 
-![](Appendix_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
+![](Appendix_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
 
 ``` r
 train_cv = cbind(train_df_cv, id)
@@ -542,7 +567,7 @@ ggplot()+
   scale_color_manual('Classifier', values=c('#9932CC', "#DC143C", "#6495ED"))
 ```
 
-![](Appendix_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
+![](Appendix_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
 
 ### Comparison
 
@@ -565,15 +590,15 @@ more unique probability estimates for the test set observations.
 ggplot()+
   geom_line(aes(x = rf_test_cv_result$scores_uncal, y = rf_test_cv_result$probs_iso, color = "Cross-Validation"), size=1.1)+
   geom_line(aes(x = rf_test$scores_uncal, y = rf_test$probs_iso, color = "Simple Split"), size=1.1)+
-  geom_point(aes(x = rf_test$scores_uncal, y = rf_test$label), color = "#7a8b8b")+
-  geom_abline(intercept = 0, slope = 1, linetype="dashed")+
+  #geom_point(aes(x = rf_test$scores_uncal, y = rf_test$label), color = "#7a8b8b")+
+  #geom_abline(intercept = 0, slope = 1, linetype="dashed")+
   xlab("Not-calibrated Score")+
   ylab("Calibrated Score")+
   theme(legend.position = "bottom", text = element_text(size = 16))+
   scale_color_manual('Re-Calibration Method', values=c("#2a5a83", "#ff700f"))
 ```
 
-![](Appendix_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
+![](Appendix_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
 
 Using the CORP procedure to analyse the calibration performance of the
 productive probability estimates, we see an improvement of the
@@ -631,7 +656,7 @@ ggplot()+
     ylab("Fitted Probability")
 ```
 
-![](Appendix_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
+![](Appendix_files/figure-gfm/unnamed-chunk-23-1.png)<!-- -->
 
 ``` r
 # ROC comparison
@@ -653,7 +678,7 @@ ggplot()+
              x = 0.75, y = 0.25, color = "yellow", fill = "black", size = 4)
 ```
 
-![](Appendix_files/figure-gfm/unnamed-chunk-22-2.png)<!-- -->
+![](Appendix_files/figure-gfm/unnamed-chunk-23-2.png)<!-- -->
 
 ## Optimization
 
@@ -820,7 +845,7 @@ system.time({
     ## Best of gen:  0.004098251 Params:  1 315 11
 
     ##    user  system elapsed 
-    ##  20.460   2.062  13.831
+    ##  21.496   2.027  14.496
 
 Optimizing on maximum Discrimination
 
@@ -845,7 +870,7 @@ gen_res_rf = GeneticAlg.int(genomeLen = 3, genomeMin = c(1, 50, 1), genomeMax = 
     ## Best of gen:  -0.1640125 Params:  4 402 14
 
     ##    user  system elapsed 
-    ##  21.950   2.027  14.756
+    ##  22.794   2.052  15.454
 
 <!-- #### Sigmoid Scaling -->
 <!-- ```{r} -->
