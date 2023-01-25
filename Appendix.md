@@ -19,6 +19,56 @@ the original feature names. This however, is not problematic, since the
 focus is on the resulting scores of the models and not about feature
 importance.
 
+``` r
+df = get_uci()
+```
+
+    ## 'data.frame':    690 obs. of  15 variables:
+    ##  $ V1 : Factor w/ 2 levels "0","1": 2 1 1 1 2 1 2 1 2 1 ...
+    ##  $ V2 : num  22.1 22.7 29.6 21.7 20.2 ...
+    ##  $ V3 : num  11.46 7 1.75 11.5 8.17 ...
+    ##  $ V4 : Factor w/ 3 levels "1","2","3": 2 2 1 1 2 2 2 2 1 2 ...
+    ##  $ V5 : Factor w/ 14 levels "1","2","3","4",..: 4 8 4 5 6 8 3 11 2 4 ...
+    ##  $ V6 : Factor w/ 8 levels "1","2","3","4",..: 4 4 4 3 4 7 4 7 7 7 ...
+    ##  $ V7 : num  1.585 0.165 1.25 0 1.96 ...
+    ##  $ V8 : Factor w/ 2 levels "0","1": 1 1 1 2 2 2 1 2 1 2 ...
+    ##  $ V9 : Factor w/ 2 levels "0","1": 1 1 1 2 2 2 1 2 1 2 ...
+    ##  $ V10: int  0 0 0 11 14 2 0 6 0 3 ...
+    ##  $ V11: Factor w/ 2 levels "0","1": 2 1 2 2 1 1 1 1 1 2 ...
+    ##  $ V12: Factor w/ 3 levels "1","2","3": 2 2 2 2 2 2 2 2 2 2 ...
+    ##  $ V13: int  100 160 280 0 60 100 60 43 176 100 ...
+    ##  $ V14: int  1213 1 1 1 159 1 101 561 538 51 ...
+    ##  $ V15: Factor w/ 2 levels "0","1": 1 1 1 2 2 2 1 2 1 1 ...
+
+``` r
+colnames(df) = c("X", "Target", "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12", "F13", "F14")
+df$Target = as.factor(df$Target)
+
+# Split data randomly in three distinct sets
+frac_train = nrow(df)*0.6
+frac_calib = nrow(df)*0.2
+test_calib = nrow(df)*0.2
+set.seed(231122)
+split = split(df, sample(rep(1:3, 
+                             times = c(frac_train, frac_calib, test_calib))))
+train_df = split$`1`
+calib_df = split$`2`
+test_df = split$`3`
+
+# Check that no observation is used more than once
+idx = c(train_df$X, calib_df$X, test_df$X)
+sum(duplicated(idx))
+```
+
+    ## [1] 0
+
+``` r
+data = lapply(list(train_df, calib_df, test_df), function(x){x[,-1]} )
+train_df = data[[1]]
+calib_df = data[[2]]
+test_df = data[[3]]
+```
+
 Step 1: Classifier Training using Training Data Four different
 classification models are trained using the same training sample for
 each model.
@@ -196,7 +246,8 @@ sig_plot = ggplot()+
   xlab("Predicted Score")+
   ylab("Fitted Probability")+
   theme(legend.position = "bottom", text = element_text(size = 12))+
-  scale_color_manual('Classifier', values=c('#9932CC', "#DC143C", "#006400", "#6495ED"))
+  scale_color_manual('Classifier', values=c('#9932CC', "#DC143C", "#006400", "#6495ED"))+
+  ylim(c(0,1))
 sig_plot
 ```
 
@@ -396,6 +447,7 @@ test_assess_func(data = rf_test)
     ## uncal    0.10808728    0.023508439      0.1649486   0.2495274
     ## sigmoid  0.10499608    0.020417236      0.1649486   0.2495274
     ## isotonic 0.09667475    0.003357524      0.1562102   0.2495274
+    ## combined 0.09883349    0.014254654      0.1649486   0.2495274
 
 ``` r
 test_assess_func(data = gbm_test)
@@ -405,6 +457,7 @@ test_assess_func(data = gbm_test)
     ## uncal     0.1291826     0.02711835      0.1474632   0.2495274
     ## sigmoid   0.1243174     0.02225325      0.1474632   0.2495274
     ## isotonic  0.1223025     0.01494889      0.1421738   0.2495274
+    ## combined  0.1182866     0.01622242      0.1474632   0.2495274
 
 ``` r
 test_assess_func(data = nb_test)
@@ -414,6 +467,7 @@ test_assess_func(data = nb_test)
     ## uncal     0.2113858     0.09462265      0.1327642   0.2495274
     ## sigmoid   0.1635735     0.04681034      0.1327642   0.2495274
     ## isotonic  0.1337986     0.01395984      0.1296886   0.2495274
+    ## combined  0.1400354     0.02327224      0.1327642   0.2495274
 
 The plot below shows how un-calibrated scores are mapped into their
 re-calibrated counterparts when using isotonic re-scaling. Due to
@@ -528,6 +582,7 @@ test_assess_func(data = rf_test_cv_result)
     ## uncal     0.1032055     0.01837413      0.1646961   0.2495274
     ## sigmoid   0.1012311     0.01639980      0.1646961   0.2495274
     ## isotonic  0.1005435     0.01508271      0.1640666   0.2495274
+    ## combined  0.1007454     0.01591410      0.1646961   0.2495274
 
 ``` r
 test_assess_func(data = gbm_test_cv_result)
@@ -537,6 +592,7 @@ test_assess_func(data = gbm_test_cv_result)
     ## uncal     0.1047334     0.01784319      0.1626372   0.2495274
     ## sigmoid   0.1075200     0.02062981      0.1626372   0.2495274
     ## isotonic  0.1125024     0.02321094      0.1602359   0.2495274
+    ## combined  0.1076811     0.02079092      0.1626372   0.2495274
 
 ``` r
 test_assess_func(data = nb_test_cv_result)
@@ -546,6 +602,7 @@ test_assess_func(data = nb_test_cv_result)
     ## uncal     0.1851119     0.06002553      0.1244411   0.2495274
     ## sigmoid   0.1553751     0.03028874      0.1244411   0.2495274
     ## isotonic  0.1440049     0.01414342      0.1196660   0.2495274
+    ## combined  0.1445704     0.01948410      0.1244411   0.2495274
 
 The plot below shows again the mapping of un-calibrated scores into
 probability estimates for a isotonic calibration model. Due to the
@@ -630,6 +687,7 @@ corp_simple
     ## uncal    0.10808728    0.023508439      0.1649486   0.2495274
     ## sigmoid  0.10499608    0.020417236      0.1649486   0.2495274
     ## isotonic 0.09667475    0.003357524      0.1562102   0.2495274
+    ## combined 0.09883349    0.014254654      0.1649486   0.2495274
 
 ``` r
 corp_cv
@@ -639,6 +697,7 @@ corp_cv
     ## uncal     0.1032055     0.01837413      0.1646961   0.2495274
     ## sigmoid   0.1012311     0.01639980      0.1646961   0.2495274
     ## isotonic  0.1005435     0.01508271      0.1640666   0.2495274
+    ## combined  0.1007454     0.01591410      0.1646961   0.2495274
 
 ``` r
 # Obtain Calibration Assessment
@@ -845,7 +904,7 @@ system.time({
     ## Best of gen:  0.004098251 Params:  1 315 11
 
     ##    user  system elapsed 
-    ##  21.085   2.107  14.242
+    ##  25.886   2.314  18.383
 
 Optimizing on maximum Discrimination
 
@@ -870,7 +929,7 @@ gen_res_rf = GeneticAlg.int(genomeLen = 3, genomeMin = c(1, 50, 1), genomeMax = 
     ## Best of gen:  -0.1640125 Params:  4 402 14
 
     ##    user  system elapsed 
-    ##  22.113   2.111  14.938
+    ##  25.451   2.341  17.219
 
 <!-- #### Sigmoid Scaling -->
 <!-- ```{r} -->

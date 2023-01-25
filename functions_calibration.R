@@ -183,7 +183,8 @@ score_test_func = function(classifier_model, classifier, calibrator_sigmoid, iso
   calibs_test = as.data.frame(cbind(label = as.numeric(test_df$Target)-1,
                                     scores_uncal = scores_uncalib_test,
                                     probs_sig = recalib_sigmoid_test,
-                                    probs_iso = recalib_iso_test))
+                                    probs_iso = recalib_iso_test,
+                                    probs_comb = 0.5*(recalib_sigmoid_test+recalib_iso_test)))
   calibs_test = calibs_test[order(calibs_test$scores_uncal),]
   return(calibs_test)
 }
@@ -195,9 +196,12 @@ test_assess_func = function(data){
                                   region.method = "resampling", region.position = "diagonal"))
   r_iso = summary(reliabilitydiag(x = data$probs_iso, y = data$label,
                                   region.method = "resampling", region.position = "diagonal"))
+  r_comb = summary(reliabilitydiag(x = data$probs_comb, y = data$label,
+                                  region.method = "resampling", region.position = "diagonal"))
   result = as.data.frame(rbind(uncal = r_raw[,-1],
                                sigmoid = r_sig[,-1],
-                               isotonic = r_iso[,-1]))
+                               isotonic = r_iso[,-1],
+                               combined = r_comb[,-1]))
   return(result)
 }
 
@@ -319,7 +323,8 @@ test_cv_func = function(classifier_model, Classifier_list,
   calibs_test = as.data.frame(cbind(label = as.numeric(test_df$Target)-1,
                                     scores_uncal = uncal_avg_scores,
                                     probs_sig = sigmoid_avg_probs,
-                                    probs_iso = isotonic_avg_probs))
+                                    probs_iso = isotonic_avg_probs,
+                                    probs_comb = 0.5*(sigmoid_avg_probs+isotonic_avg_probs)))
   calibs_test = calibs_test[order(calibs_test$scores_uncal),]
   
   return(calibs_test)
